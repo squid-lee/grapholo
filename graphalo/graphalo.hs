@@ -1,6 +1,3 @@
-import Control.Monad (unless)
-import System.IO (isEOF)
-
 import qualified Graphics.Gnuplot.Graph.TwoDimensional as Graph2D
 import qualified Graphics.Gnuplot.Plot.TwoDimensional as Plot2D
 import Graphics.Gnuplot.Advanced
