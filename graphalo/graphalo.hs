@@ -8,39 +8,38 @@ import Graphics.Gnuplot.Terminal.X11 as X11
 
 import System.Environment (getArgs)
 
-type LineSplitter = String -> (Double, Double)
-
-argsToLineSplitter :: String -> LineSplitter
-argsToLineSplitter s = case map read . words $ s of
-     -- pred to make the interface given 1 based
-      [ix1, ix2] -> (\s -> (read $ (words s) !! pred ix1, read $ (words s) !! pred ix2))
-      _ -> error "Bad field description"
-
-
-{-
-   - one argument, which is one number => plot that number against [1..]
-   - one argument, which is a description of fields => select only those
-     fields, and plot them against each other
-   - two numeric arguments, plot those fields against each other
--}
-buildSplitter :: [String] -> LineSplitter
-buildSplitter = undefined --
-
 main = do
   args <- getArgs
-  let splitter =  if length args == 1 then
-                    argsToLineSplitter (head args)
-                  else
-                    if length args == 0 then
-                      argsToLineSplitter "1 2"
-                    else
-                      argsToLineSplitter (unwords args)
+  let process = buildProcessor (map read args)
 
-  contents <- getContents
+  contents <- fmap lines getContents
 
-  displayPlot (lines contents) splitter
+  displayPlot (process contents)
 
-displayPlot :: [a] -> (a -> (Double, Double)) -> IO ()
-displayPlot datas transform = do
-  plotSync X11.cons $ Plot2D.parameterFunction Graph2D.points datas transform
+buildProcessor :: [Int] -> ([String] -> [(Double, Double)])
+buildProcessor [] = zip [1.0..] . map read
+buildProcessor [field] = zip [1.0..] . map (oneField field)
+buildProcessor [field1, field2] = map (twoFields field1 field2)
+buildProcessor args = error $ "Don't know what to do with " ++ (unwords . map show $ args)
+
+oneField :: Int -> (String -> Double)
+oneField field line = read (ws !! idx)
+  where
+    -- use one based indexing, like awk
+    idx = pred field
+    ws = words line
+
+twoFields :: Int -> Int -> (String -> (Double, Double))
+twoFields field1 field2 line = (getField field1 line, getField field2 line)
+  where
+    -- use one based indexing, like awk
+    getField field line = read $ ws !! idx
+      where
+        ws = words line
+        idx = pred field
+
+
+displayPlot :: [(Double, Double)] -> IO ()
+displayPlot datas = do
+  plotSync X11.cons $ Plot2D.parameterFunction Graph2D.points datas id
   return ()
