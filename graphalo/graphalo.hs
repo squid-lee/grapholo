@@ -1,7 +1,7 @@
 import qualified Graphics.Gnuplot.Graph.TwoDimensional as Graph2D
 import qualified Graphics.Gnuplot.Plot.TwoDimensional as Plot2D
 import Graphics.Gnuplot.Advanced
-import Graphics.Gnuplot.Terminal.X11 as X11
+import qualified Graphics.Gnuplot.Terminal.Default as DefaultTerm
 
 import System.Environment (getArgs)
 
@@ -38,5 +38,5 @@ getField field line = if idx < length ws then
 
 displayPlot :: [(Double, Double)] -> IO ()
 displayPlot datas = do
-  plotSync X11.cons $ Plot2D.parameterFunction Graph2D.points datas id
+  plotSync DefaultTerm.cons $ Plot2D.parameterFunction Graph2D.points datas id
   return ()
