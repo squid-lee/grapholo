@@ -20,20 +20,20 @@ buildProcessor [field1, field2] = map (twoFields field1 field2)
 buildProcessor args = error $ "Don't know what to do with " ++ (unwords . map show $ args)
 
 oneField :: Int -> (String -> Double)
-oneField field line = read (ws !! idx)
+oneField = getField
+
+twoFields :: Int -> Int -> (String -> (Double, Double))
+twoFields field1 field2 line = (getField field1 line, getField field2 line)
+
+getField :: Int -> String -> Double
+getField field line = if idx < length ws then
+                        read $ ws !! idx
+                      else
+                        error $ unwords ["Cannot index", line, "at", show field]
   where
     -- use one based indexing, like awk
     idx = pred field
     ws = words line
-
-twoFields :: Int -> Int -> (String -> (Double, Double))
-twoFields field1 field2 line = (getField field1 line, getField field2 line)
-  where
-    -- use one based indexing, like awk
-    getField field line = read $ ws !! idx
-      where
-        ws = words line
-        idx = pred field
 
 
 displayPlot :: [(Double, Double)] -> IO ()
