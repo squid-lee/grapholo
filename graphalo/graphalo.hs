@@ -7,6 +7,8 @@ import System.Environment (getArgs)
 import Options.Applicative
 import Data.Monoid (mconcat)
 
+import Data.Char (isUpper, toLower)
+
 data Options = Options {
   humanReadableFields :: Bool,
   fields :: [Int]
@@ -33,7 +35,7 @@ cli = Options <$>
 
 
 buildProcessor :: [Int] -> ([String] -> [(Double, Double)])
-buildProcessor [] = zip [1.0..] . map read
+buildProcessor [] = zip [1.0..] . map readSI
 buildProcessor [field] = zip [1.0..] . map (oneField field)
 buildProcessor [field1, field2] = map (twoFields field1 field2)
 buildProcessor args = error $ "Don't know what to do with " ++ (unwords . map show $ args)
@@ -46,9 +48,9 @@ twoFields field1 field2 line = (getField field1 line, getField field2 line)
 
 getField :: Int -> String -> Double
 getField field line = if idx < length ws then
-                        read $ ws !! idx
+                        readSI $ ws !! idx
                       else
-                        error $ unwords ["Cannot index", line, "at", show field]
+                        error $ unwords ["Cannot index", concat ["'", line, "'"], "at", show field]
   where
     -- use one based indexing, like awk
     idx = pred field
@@ -59,3 +61,20 @@ displayPlot :: [(Double, Double)] -> IO ()
 displayPlot datas = do
   plotSync DefaultTerm.cons $ Plot2D.parameterFunction Graph2D.points datas id
   return ()
+
+readSI :: String -> Double
+readSI s = case reads s :: [(Double, String)] of
+            [] -> error . unwords $ ["Could not parse", s, "as a double or SI double"]
+            [(val, [])] -> val
+            [(val, [suf])] -> siSuffix suf $ val
+            [(_, s)] -> error . unwords $ [s, "is a bad suffix"]
+            xs -> error . unwords $ ["Could not unambiguously parse", s]
+
+siSuffix :: Char -> (Double -> Double)
+siSuffix 'b' = (* 10**1)
+siSuffix 'k' = (* 10**2)
+siSuffix 'm' = (* 10**3)
+siSuffix 'g' = (* 10**4)
+siSuffix 't' = (* 10**5)
+siSuffix c
+  | isUpper c = siSuffix $ toLower c
