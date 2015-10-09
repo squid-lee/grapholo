@@ -18,7 +18,7 @@ main = do
   options <- execParser $ info cli fullDesc
   let process = buildProcessor options
   contents <- fmap lines getContents
-  displayPlot (process contents)
+  displayPlot options (process contents)
 
 
 cli :: Parser Options
@@ -95,5 +95,5 @@ readValues opts str = case reads str of
     interpretSuffix c
       | any isUpper c = interpretSuffix $ map toLower c
 
-displayPlot :: [(Double, Double)] -> IO Bool
-displayPlot datas = plot X11 $ Data2D [Title ""] [] datas
+displayPlot :: Options -> [(Double, Double)] -> IO Bool
+displayPlot opts datas = plot X11 $ Data2D [Title $ plotTitle opts] [] datas
