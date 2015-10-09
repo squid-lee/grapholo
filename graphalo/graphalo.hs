@@ -24,7 +24,7 @@ main = do
 cli :: Parser Options
 cli = Options <$>
       -- switch is boolean argument
-      switch (mconcat [ long "parse-si-suffix-fields"
+      switch (mconcat [ long "human-readable"
                       , short 's'
                       , help "treat e.g 1.2K as 1200, 7.45M as 7450000 or 13B as 13"
                       ])  <*>
