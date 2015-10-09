@@ -1,7 +1,4 @@
-import qualified Graphics.Gnuplot.Graph.TwoDimensional as Graph2D
-import qualified Graphics.Gnuplot.Plot.TwoDimensional as Plot2D
-import Graphics.Gnuplot.Advanced
-import qualified Graphics.Gnuplot.Terminal.Default as DefaultTerm
+import Graphics.EasyPlot
 
 import System.Environment (getArgs)
 import Options.Applicative
@@ -15,10 +12,11 @@ data Options = Options {
 }
   deriving Show
 
+defaultOptions = Options False []
 
 main = do
   options <- execParser $ info cli fullDesc
-  let process = buildProcessor (fields options)
+  let process = buildProcessor options
   contents <- fmap lines getContents
   displayPlot (process contents)
 
@@ -34,47 +32,63 @@ cli = Options <$>
       (fmap (map read) $ many $ argument str (metavar "FIELDS"))
 
 
-buildProcessor :: [Int] -> ([String] -> [(Double, Double)])
-buildProcessor [] = zip [1.0..] . map readSI
-buildProcessor [field] = zip [1.0..] . map (oneField field)
-buildProcessor [field1, field2] = map (twoFields field1 field2)
-buildProcessor args = error $ "Don't know what to do with " ++ (unwords . map show $ args)
+buildProcessor :: Options -> ([String] -> [(Double, Double)])
+buildProcessor opts = case fields opts of
+                        []               ->  zip [1.0..] . map (readValues opts)
+                        [field]          ->  zip [1.0..] . map (oneField opts field)
+                        [field1, field2] ->  map (twoFields opts field1 field2)
+                        args             ->  error $ "Don't know what to do with " ++ (unwords . map show $ args)
 
-oneField :: Int -> (String -> Double)
+oneField :: Options -> Int -> (String -> Double)
 oneField = getField
 
-twoFields :: Int -> Int -> (String -> (Double, Double))
-twoFields field1 field2 line = (getField field1 line, getField field2 line)
+twoFields :: Options -> Int -> Int -> (String -> (Double, Double))
+twoFields opts field1 field2 line = (getField opts field1 line, getField opts field2 line)
 
-getField :: Int -> String -> Double
-getField field line = if idx < length ws then
-                        readSI $ ws !! idx
-                      else
-                        error $ unwords ["Cannot index", concat ["'", line, "'"], "at", show field]
+getField :: Options -> Int -> String -> Double
+getField opt field line = if idx < length ws then
+                            readValues opt $ ws !! idx
+                          else
+                            error $ unwords ["Cannot index", concat ["'", line, "'"], "at", show field]
   where
     -- use one based indexing, like awk
     idx = pred field
     ws = words line
 
 
-displayPlot :: [(Double, Double)] -> IO ()
-displayPlot datas = do
-  plotSync DefaultTerm.cons $ Plot2D.parameterFunction Graph2D.points datas id
-  return ()
+displayPlot :: [(Double, Double)] -> IO Bool
+displayPlot datas = plot X11 $ Data2D [Title ""] [] datas
 
-readSI :: String -> Double
-readSI s = case reads s :: [(Double, String)] of
-            [] -> error . unwords $ ["Could not parse", s, "as a double or SI double"]
-            [(val, [])] -> val
-            [(val, [suf])] -> siSuffix suf $ val
-            [(_, s)] -> error . unwords $ [s, "is a bad suffix"]
-            xs -> error . unwords $ ["Could not unambiguously parse", s]
+readValues :: Options -> (String -> Double)
+readValues opts str = case reads str of
+                        [] -> readValueError
+                        [(val, "")] -> val
+                        [(val, suf)] -> if asHuman then interpretSuffix suf $ val else readValueError
+                        xs -> error . unwords $ ["Could not unambiguously parse", str, ". Could be ", show xs]
+  where
+    readValueError = error . unwords $ ["Could not parse", str, "as a number"]
+    asHuman = humanReadableFields opts
 
-siSuffix :: Char -> (Double -> Double)
-siSuffix 'b' = (* 10**1)
-siSuffix 'k' = (* 10**2)
-siSuffix 'm' = (* 10**3)
-siSuffix 'g' = (* 10**4)
-siSuffix 't' = (* 10**5)
-siSuffix c
-  | isUpper c = siSuffix $ toLower c
+    interpretSuffix :: String -> (Double -> Double)
+    interpretSuffix "B" = (* 1000**0)
+    interpretSuffix "K" = (* 1000**1)
+    interpretSuffix "M" = (* 1000**2)
+    interpretSuffix "G" = (* 1000**3)
+    interpretSuffix "T" = (* 1000**4)
+    interpretSuffix "P" = (* 1000**5)
+    interpretSuffix "E" = (* 1000**6)
+    interpretSuffix "Z" = (* 1000**7)
+    interpretSuffix "Y" = (* 1000**8)
+
+    interpretSuffix "Bi" = (* 1024**0)
+    interpretSuffix "Ki" = (* 1024**1)
+    interpretSuffix "Mi" = (* 1024**2)
+    interpretSuffix "Gi" = (* 1024**3)
+    interpretSuffix "Ti" = (* 1024**4)
+    interpretSuffix "Pi" = (* 1024**5)
+    interpretSuffix "Ei" = (* 1024**6)
+    interpretSuffix "Zi" = (* 1024**7)
+    interpretSuffix "Yi" = (* 1024**8)
+
+    interpretSuffix c
+      | any isUpper c = interpretSuffix $ map toLower c
