@@ -56,9 +56,6 @@ getField opt field line = if idx < length ws then
     ws = words line
 
 
-displayPlot :: [(Double, Double)] -> IO Bool
-displayPlot datas = plot X11 $ Data2D [Title ""] [] datas
-
 readValues :: Options -> (String -> Double)
 readValues opts str = case reads str of
                         [] -> readValueError
@@ -92,3 +89,6 @@ readValues opts str = case reads str of
 
     interpretSuffix c
       | any isUpper c = interpretSuffix $ map toLower c
+
+displayPlot :: [(Double, Double)] -> IO Bool
+displayPlot datas = plot X11 $ Data2D [Title ""] [] datas
