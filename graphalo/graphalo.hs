@@ -6,13 +6,13 @@ import Data.Monoid (mconcat)
 
 import Data.Char (isUpper, toLower)
 
-data Options = Options {
-  humanReadableFields :: Bool,
-  fields :: [Int]
-}
+data Options = Options { humanReadableFields :: Bool
+                       , plotTitle :: String
+                       , fields :: [Int]
+                       }
   deriving Show
 
-defaultOptions = Options False []
+defaultOptions = Options False "" []
 
 main = do
   options <- execParser $ info cli fullDesc
@@ -28,6 +28,11 @@ cli = Options <$>
                       , short 's'
                       , help "treat e.g 1.2K as 1200, 7.45M as 7450000 or 13B as 13"
                       ])  <*>
+      ((maybe "" id) <$> optional (strOption (mconcat [ long "title"
+                            , short 't'
+                            , help "title for the plot"
+                            , metavar "TITLE"
+                            ]))) <*>
       -- (many . (argument str)) gives you many stringy arguments
       (fmap (map read) $ many $ argument str (metavar "FIELDS"))
 
