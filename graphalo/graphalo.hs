@@ -8,10 +8,11 @@ import Data.Char (isUpper, toLower)
 
 data Options = Options { humanReadableFields :: Bool
                        , plotTitle :: String
+                       , style :: Style
                        , fields :: [Int]
                        }
 
-defaultOptions = Options False "" []
+defaultOptions = Options False "" Points []
 
 main = do
   options <- execParser $ info cli fullDesc
