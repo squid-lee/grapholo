@@ -41,10 +41,12 @@ cli = Options <$>
                                     ]))
     plotStyleFlag = option styleR (mconcat [ long "plot-style"
                                            , short 'p'
-                                           , help "Style to plot / join points with"
+                                           , metavar "POINT STYLE"
+                                           , help $ unwords ["Style to plot points with. Choose from", unwords styles]
                                            , value Points
                                            ])
       where
+        styles = ["Lines", "Points", "Dots", "Impulses", "LinesPoints"]
         styleR :: ReadM Style
         styleR = eitherReader $ \s -> case map toLower s of
                                         "lines" -> Right Lines
@@ -113,4 +115,4 @@ readValues opts str = case reads str of
       | any isUpper c = interpretSuffix $ map toLower c
 
 displayPlot :: Options -> [(Double, Double)] -> IO Bool
-displayPlot opts datas = plot X11 $ Data2D [Title $ plotTitle opts] [] datas
+displayPlot opts datas = plot X11 $ Data2D [Title $ plotTitle opts, Style $ style opts] [] datas
