@@ -10,7 +10,6 @@ data Options = Options { humanReadableFields :: Bool
                        , plotTitle :: String
                        , fields :: [Int]
                        }
-  deriving Show
 
 defaultOptions = Options False "" []
 
