@@ -1,14 +1,18 @@
-import Graphics.EasyPlot
-
-import System.Environment (getArgs)
-import Options.Applicative
-import Data.Monoid (mconcat)
-
 import Data.Char (isUpper, toLower)
+import Data.Monoid (mconcat)
+import Data.Maybe (catMaybes)
+import Data.Traversable (sequenceA)
+import System.Environment (getArgs)
+
+import Graphics.EasyPlot
+import Options.Applicative
+
+
 
 data Options = Options { humanReadableFields :: Bool
                        , plotTitle :: String
-                       , style :: Style
+                       , pointStyle :: Style
+                       , gnuPlotOptions :: [GnuplotOption]
                        , fields :: [Int]
                        }
 
@@ -26,6 +30,7 @@ cli = Options <$>
         humanReadableFlag <*>
         titleFlag <*>
         plotStyleFlag <*>
+        gnuPlotFlags <*>
       -- (many . (argument str)) gives you many stringy arguments
         (fmap (map read) $ many $ argument str (metavar "FIELDS"))
   where
@@ -39,6 +44,16 @@ cli = Options <$>
                                     , metavar "TITLE"
                                     , value ""
                                     ]))
+
+    gnuPlotFlags = catMaybes <$> sequenceA [interactiveFlag, debugFlag]
+      where
+        interactiveFlag = flag Nothing (Just Interactive) (mconcat [ long "interactive"
+                                                                   , help "Make the plot interactive. BROKEN"
+                                                                   ])
+        debugFlag = flag Nothing (Just Debug) (mconcat [ long "debug"
+                                                       , help "Print gnuplot options"
+                                                       ])
+
     plotStyleFlag = option styleR (mconcat [ long "plot-style"
                                            , short 'p'
                                            , metavar "POINT STYLE"
@@ -115,4 +130,7 @@ readValues opts str = case reads str of
       | any isUpper c = interpretSuffix $ map toLower c
 
 displayPlot :: Options -> [(Double, Double)] -> IO Bool
-displayPlot opts datas = plot X11 $ Data2D [Title $ plotTitle opts, Style $ style opts] [] datas
+displayPlot opts datas = plot' (gnuPlotOptions opts) X11 $ Data2D [title, style] [] datas
+  where
+    title = Title $ plotTitle opts
+    style = Style $ pointStyle opts
