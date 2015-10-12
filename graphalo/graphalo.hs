@@ -23,19 +23,36 @@ main = do
 
 cli :: Parser Options
 cli = Options <$>
-      -- switch is boolean argument
-      switch (mconcat [ long "human-readable"
-                      , short 's'
-                      , help "treat e.g 1.2K as 1200, 7.45M as 7450000 or 13B as 13"
-                      ])  <*>
-      ((maybe "" id) <$> optional (strOption (mconcat [ long "title"
-                            , short 't'
-                            , help "title for the plot"
-                            , metavar "TITLE"
-                            ]))) <*>
+        humanReadableFlag <*>
+        titleFlag <*>
+        plotStyleFlag <*>
       -- (many . (argument str)) gives you many stringy arguments
-      (fmap (map read) $ many $ argument str (metavar "FIELDS"))
-
+        (fmap (map read) $ many $ argument str (metavar "FIELDS"))
+  where
+    humanReadableFlag = (switch (mconcat [ long "human-readable"
+                                         , short 's'
+                                         , help "treat e.g 1.2K as 1200, 7.45M as 7450000 or 13B as 13"
+                                         ]))
+    titleFlag = (strOption (mconcat [ long "title"
+                                    , short 't'
+                                    , help "title for the plot"
+                                    , metavar "TITLE"
+                                    , value ""
+                                    ]))
+    plotStyleFlag = option styleR (mconcat [ long "plot-style"
+                                           , short 'p'
+                                           , help "Style to plot / join points with"
+                                           , value Points
+                                           ])
+      where
+        styleR :: ReadM Style
+        styleR = eitherReader $ \s -> case map toLower s of
+                                        "lines" -> Right Lines
+                                        "points" -> Right Points
+                                        "dots" -> Right Dots
+                                        "impulses" -> Right Impulses
+                                        "linespoints" -> Right Linespoints
+                                        _ -> Left $ unwords ["Unknown Style", s]
 
 buildProcessor :: Options -> ([String] -> [(Double, Double)])
 buildProcessor opts = case fields opts of
