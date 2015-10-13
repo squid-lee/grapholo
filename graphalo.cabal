@@ -17,6 +17,6 @@ cabal-version:       >=1.8
 executable graphalo
   main-is: graphalo/graphalo.hs
   -- other-modules:
-  build-depends:       base ==4.6.*,
+  build-depends:       base ==4.*,
                        easyplot ==1.*,
                        optparse-applicative ==0.12.*
