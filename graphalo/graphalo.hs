@@ -35,7 +35,7 @@ cli = Options <$>
         (fmap (map read) $ many $ argument str (metavar "FIELDS"))
   where
     humanReadableFlag = (switch (mconcat [ long "human-readable"
-                                         , short 's'
+                                         , short 'h'
                                          , help "treat e.g 1.2K as 1200, 7.45M as 7450000 or 13B as 13"
                                          ]))
     titleFlag = (strOption (mconcat [ long "title"
