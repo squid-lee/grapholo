@@ -16,6 +16,7 @@ cabal-version:       >=1.8
 
 executable plot
   main-is: graphalo/graphalo.hs
+  ghc-options: -Wall
   -- other-modules:
   build-depends:       base ==4.*,
                        easyplot ==1.*,
