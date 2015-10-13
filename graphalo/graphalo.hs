@@ -1,12 +1,9 @@
-import Data.Char (isUpper, toUpper, isLower, toLower)
-import Data.Monoid (mconcat)
+import Data.Char (toUpper, isLower, toLower)
 import Data.Maybe (catMaybes)
-import Data.Traversable (sequenceA)
-import System.Environment (getArgs)
 
 import Graphics.EasyPlot
 import Options.Applicative
-
+import System.Exit
 
 
 data Options = Options { humanReadableFields :: Bool
@@ -16,13 +13,21 @@ data Options = Options { humanReadableFields :: Bool
                        , fields :: [Int]
                        }
 
-defaultOptions = Options False "" Points []
+defaultOptions :: Options
+defaultOptions = Options { humanReadableFields = False
+                         , plotTitle = ""
+                         , pointStyle = Points
+                         , gnuPlotOptions = []
+                         , fields = []
+                         }
 
+main :: IO ()
 main = do
   options <- execParser $ info cli fullDesc
   let process = buildProcessor options
   contents <- fmap lines getContents
-  displayPlot options (process contents)
+  success <- displayPlot options (process contents)
+  exitWith $ if success then ExitSuccess else ExitFailure 1
 
 
 cli :: Parser Options
@@ -96,13 +101,13 @@ getField opt field line = if idx < length ws then
 
 
 readValues :: Options -> (String -> Double)
-readValues opts str = case reads str of
+readValues opts toParse = case reads toParse of
                         [] -> readValueError
                         [(val, "")] -> val
                         [(val, suf)] -> if asHuman then interpretSuffix suf $ val else readValueError
-                        xs -> error . unwords $ ["Could not unambiguously parse", str, ". Could be ", show xs]
+                        xs -> error . unwords $ ["Could not unambiguously parse", toParse, ". Could be ", show xs]
   where
-    readValueError = error . unwords $ ["Could not parse", str, "as a number"]
+    readValueError = error . unwords $ ["Could not parse", toParse, "as a number"]
     asHuman = humanReadableFields opts
 
     interpretSuffix :: String -> (Double -> Double)
@@ -128,6 +133,8 @@ readValues opts str = case reads str of
 
     interpretSuffix c
       | any isLower c = interpretSuffix $ map toUpper c
+
+    interpretSuffix sf = error $ unwords ["Couldn't parse suffix", sf]
 
 displayPlot :: Options -> [(Double, Double)] -> IO Bool
 displayPlot opts datas = plot' (gnuPlotOptions opts) X11 $ Data2D [title, style] [] datas
