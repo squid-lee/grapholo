@@ -14,7 +14,7 @@ author:              Joseph Slade
 build-type:          Simple
 cabal-version:       >=1.8
 
-executable graphalo
+executable plot
   main-is: graphalo/graphalo.hs
   -- other-modules:
   build-depends:       base ==4.*,
