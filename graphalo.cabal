@@ -18,4 +18,5 @@ executable graphalo
   main-is: graphalo/graphalo.hs
   -- other-modules:
   build-depends:       base ==4.6.*,
-                       gnuplot ==5.*
+                       easyplot ==1.*,
+                       optparse-applicative ==0.12.*
