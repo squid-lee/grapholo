@@ -1,4 +1,4 @@
-import Data.Char (isUpper, toLower)
+import Data.Char (isUpper, toUpper, isLower, toLower)
 import Data.Monoid (mconcat)
 import Data.Maybe (catMaybes)
 import Data.Traversable (sequenceA)
@@ -127,7 +127,7 @@ readValues opts str = case reads str of
     interpretSuffix "Yi" = (* 1024**8)
 
     interpretSuffix c
-      | any isUpper c = interpretSuffix $ map toLower c
+      | any isLower c = interpretSuffix $ map toUpper c
 
 displayPlot :: Options -> [(Double, Double)] -> IO Bool
 displayPlot opts datas = plot' (gnuPlotOptions opts) X11 $ Data2D [title, style] [] datas
