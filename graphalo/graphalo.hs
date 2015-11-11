@@ -13,6 +13,9 @@ data Options = Options { humanReadableFields :: Bool
                        , fields :: [Int]
                        }
 
+data PlotData x y z = Plot2D [(x,y)]
+                    | Plot3D [(x,y,z)]
+
 main :: IO ()
 main = do
   options <- execParser $ info (helper <*> cli) fullDesc
@@ -69,11 +72,12 @@ cli = Options <$>
                                         _ -> Left $ unwords ["Unknown Style", s]
 
 
-buildProcessor :: Options -> ([String] -> [(Double, Double)])
+buildProcessor :: Options -> ([String] -> PlotData Double Double Double)
 buildProcessor opts = case fields opts of
-                        []               ->  zip [1.0..] . map (readValues opts)
-                        [field]          ->  zip [1.0..] . map (oneField opts field)
-                        [field1, field2] ->  map (twoFields opts field1 field2)
+                        []               ->  Plot2D . zip [1.0..] . map (readValues opts)
+                        [field]          ->  Plot2D . zip [1.0..] . map (oneField opts field)
+                        [field1, field2] ->  Plot2D . map (twoFields opts field1 field2)
+                        [field1, field2, field3] ->  Plot3D . map (threeFields opts field1 field2 field3)
                         args             ->  error $ "Don't know what to do with " ++ (unwords . map show $ args)
 
 oneField :: Options -> Int -> (String -> Double)
@@ -81,6 +85,10 @@ oneField = getField
 
 twoFields :: Options -> Int -> Int -> (String -> (Double, Double))
 twoFields opts field1 field2 line = (getField opts field1 line, getField opts field2 line)
+
+threeFields :: Options -> Int -> Int -> Int -> (String -> (Double, Double, Double))
+threeFields opts field1 field2 field3 line = (getField opts field1 line, getField opts field2 line, getField opts field3 line)
+
 
 getField :: Options -> Int -> String -> Double
 getField opt field line = if idx < length ws then
@@ -129,8 +137,11 @@ readValues opts toParse = case reads toParse of
 
     interpretSuffix sf = error $ unwords ["Couldn't parse suffix", sf]
 
-displayPlot :: Options -> [(Double, Double)] -> IO Bool
-displayPlot opts datas = plot' (gnuPlotOptions opts) X11 $ Data2D [title, style] [] datas
+displayPlot :: Options -> PlotData Double Double Double -> IO Bool
+displayPlot opts plotData = case plotData of
+                              Plot2D datas -> plot' (gnuPlotOptions opts) X11 $ Data2D [title, style] [] datas
+                              Plot3D datas -> plot' (gnuPlotOptions opts) X11 $ Data3D [title, style] [] datas
   where
+
     title = Title $ plotTitle opts
     style = Style $ pointStyle opts
