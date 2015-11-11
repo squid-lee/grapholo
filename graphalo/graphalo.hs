@@ -13,14 +13,6 @@ data Options = Options { humanReadableFields :: Bool
                        , fields :: [Int]
                        }
 
-defaultOptions :: Options
-defaultOptions = Options { humanReadableFields = False
-                         , plotTitle = ""
-                         , pointStyle = Points
-                         , gnuPlotOptions = []
-                         , fields = []
-                         }
-
 main :: IO ()
 main = do
   options <- execParser $ info (helper <*> cli) fullDesc
@@ -75,6 +67,7 @@ cli = Options <$>
                                         "impulses" -> Right Impulses
                                         "linespoints" -> Right Linespoints
                                         _ -> Left $ unwords ["Unknown Style", s]
+
 
 buildProcessor :: Options -> ([String] -> [(Double, Double)])
 buildProcessor opts = case fields opts of
