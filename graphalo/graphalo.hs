@@ -84,10 +84,14 @@ oneField :: Options -> Int -> (String -> Double)
 oneField = getField
 
 twoFields :: Options -> Int -> Int -> (String -> (Double, Double))
-twoFields opts field1 field2 line = (getField opts field1 line, getField opts field2 line)
+twoFields opts field1 field2 line = (extractField field1, extractField field2)
+  where
+    extractField field = getField opts field line
 
 threeFields :: Options -> Int -> Int -> Int -> (String -> (Double, Double, Double))
-threeFields opts field1 field2 field3 line = (getField opts field1 line, getField opts field2 line, getField opts field3 line)
+threeFields opts field1 field2 field3 line = (extractField field1, extractField field2, extractField field3)
+  where
+    extractField field = getField opts field line
 
 
 getField :: Options -> Int -> String -> Double
