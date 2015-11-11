@@ -23,7 +23,7 @@ defaultOptions = Options { humanReadableFields = False
 
 main :: IO ()
 main = do
-  options <- execParser $ info cli fullDesc
+  options <- execParser $ info (helper <*> cli) fullDesc
   let process = buildProcessor options
   contents <- fmap lines getContents
   success <- displayPlot options (process contents)
