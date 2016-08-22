@@ -1,9 +1,12 @@
 import Data.Char (toUpper, isLower, toLower)
 import Data.Maybe (catMaybes)
+import Data.Monoid (mconcat)
+import Data.Traversable (sequenceA)
 
 import Graphics.EasyPlot
 import Options.Applicative
 import System.Exit
+
 
 
 data Options = Options { humanReadableFields :: Bool
